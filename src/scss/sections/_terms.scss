@@ -23,6 +23,10 @@
         text-align: center;
     }
 
+    &__button:first-of-type {
+        display: none;
+    }
+
     &__bubbles {
         position: absolute;
         z-index: -1;
