@@ -54,6 +54,10 @@
         margin-bottom: rem(56);
     }
 
+    &__contest {
+        margin-bottom: rem(16);
+    }
+
     &__hi-label {
         position: absolute;
         z-index: 10;
@@ -101,6 +105,10 @@
 
         &__content-text {
             display: contents;
+        }
+
+        &__contest {
+            margin-bottom: rem(12);
         }
 
         &__subtitle {

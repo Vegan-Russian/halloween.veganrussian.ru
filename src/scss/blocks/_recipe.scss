@@ -1,11 +1,12 @@
 .recipe {
     position: relative;
     --allowed-line-count: 2;
-    --shadow-hover: 0px 0px 30px var(--orange-color);
+    --shadow: 6px 6px 0 rgba(210, 82, 27, 0.7);
+    --shadow-hover: 6px 6px 0 var(--light-orange-color);
 
     &__wrapper {
         border-radius: rem(20);
-        box-shadow: 6px 4px 12px rgba(210, 82, 27, 0.7);
+        box-shadow: var(--shadow);
         overflow: hidden;
         background-color: #3c3c3c;
         font-weight: 500;
@@ -33,7 +34,7 @@
     }
 
     &:focus-within .recipe__wrapper {
-        box-shadow: 0px 0px 30px var(--orange-color);
+        box-shadow: var(--shadow-hover);
 
         img {
             transform: scale(1.05);
@@ -52,6 +53,29 @@
             height: 100%;
             object-fit: cover;
             transition: transform 0.3s ease;
+        }
+    }
+
+    &__badge {
+        position: absolute;
+        top: rem(12);
+        left: rem(12);
+        z-index: 2;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: rem(6);
+        padding: rem(6) rem(12);
+        border-radius: rem(100);
+        background-color: var(--light-orange-color);
+        color: var(--black-color);
+        font-size: var(--small-text-fs);
+        font-weight: 600;
+        line-height: 1;
+        box-shadow: 0 2px 8px rgba(40, 37, 36, 0.4);
+
+        span {
+            font-size: 1.2em;
         }
     }
 
@@ -90,12 +114,6 @@
     }
 
     @include media("md") {
-        --shadow-hover: 0px 0px 15px var(--orange-color);
-
-        &__wrapper {
-            box-shadow: 6px 4px 12px rgba(210, 82, 27, 0.7);
-        }
-
         &__content {
             &--winner {
                 img {
@@ -109,7 +127,15 @@
         &__wrapper {
             font-size: rem(12);
             border-radius: rem(12);
-            box-shadow: 4px 2px 8px rgba(210, 82, 27, 0.7);
+            box-shadow: 4px 4px 0 rgba(210, 82, 27, 0.7);
+        }
+
+        &__badge {
+            top: rem(8);
+            left: rem(8);
+            gap: rem(4);
+            padding: rem(4) rem(8);
+            font-size: rem(10);
         }
 
         &__category {

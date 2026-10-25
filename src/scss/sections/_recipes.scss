@@ -1,55 +1,20 @@
 .recipes {
     margin-bottom: rem(160);
+    padding-top: rem(64);
+    position: relative;
 
-    &__header {
-        text-align: center;
-        margin-bottom: rem(64);
-    }
-    &__title {
-        text-transform: uppercase;
-        margin-bottom: rem(32);
-        text-shadow: 3px 3px 0px var(--dark-purple-color);
-    }
-
-    &__desc {
-        margin-inline: auto;
-        max-width: rem(560);
-    }
-
-    &__items {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: rem(20);
-        margin-bottom: rem(92);
-    }
-
-    &__link {
-        margin-inline: auto;
-        display: flex;
+    // Контент поверх слоя с пауками
+    &__years {
+        position: relative;
+        z-index: 1;
     }
 
     @include media("md") {
         margin-bottom: rem(120);
-        &__items {
-            grid-template-columns: repeat(3, 1fr);
-        }
     }
 
     @include media("sm") {
         margin-bottom: rem(80);
-        &__items {
-            gap: rem(12);
-            margin-bottom: rem(36);
-        }
-        &__title {
-            text-shadow: 2px 1px 0px var(--dark-purple-color);
-        }
-    }
-
-    @include media(500) {
-        &__items {
-            gap: rem(12);
-            grid-template-columns: repeat(2, 1fr);
-        }
+        padding-top: rem(32);
     }
 }
