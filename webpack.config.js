@@ -160,12 +160,6 @@ module.exports = function (_, argv) {
       },
       hot: true,
       writeToDisk: true,
-      historyApiFallback: {
-      rewrites: [
-        // Перенаправление запросов на /past-competition на past-competition.html
-        { from: /^\/past-competition$/, to: '/past-competition.html' },
-        ]
-      }
     },
     plugins: [
       ...templates,
@@ -187,6 +181,7 @@ module.exports = function (_, argv) {
         patterns: [
           { from: "src/images", to: "./images", noErrorOnMissing: true },
           { from: "src/fonts", to: "./fonts", noErrorOnMissing: true },
+          { from: "src/data", to: "./data", noErrorOnMissing: true },
         ],
       }),
       pluginImgMinify,

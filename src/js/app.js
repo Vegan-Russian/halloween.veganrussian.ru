@@ -1,8 +1,8 @@
-import "swiper/css";
 import "../scss/style.scss";
-import Swiper, {Pagination} from "swiper";
 
-let sliders = null;
+// Рецепты лежат статическим файлом рядом со страницами, бэкенд для них больше не нужен
+const RECIPES_DATA_URL = "./data/recipes.json";
+let recipesRequest = null;
 
 /**
  * Блочим скролл на странице, добавляем падинг, чтобы страница не дёргалась при исчезновении скроллбара
@@ -23,44 +23,33 @@ function lockScroll(needToLock = true) {
 }
 
 function renderYearRecipesSection({year, winners, other}) {
-  const HTMLRoot = document.querySelector(".past-competition");
+  const HTMLRoot = document.querySelector("#recipes-by-year");
 
   const root = document.createElement("section");
   root.classList = "recipes-by-year";
 
-  const winnersElement = winners
-    .sort((a, b) => a.place - b.place) // Сортировка мест
-    .map(item => {
-      item.classes = "swiper-slide";
-      return getReceiptElement(item);
-    });
+  root.innerHTML = `<h2 class="recipes-by-year__title">Рецепты ${year}</h2>`;
 
-  const slider = document.createElement("section");
-  slider.classList = "swiper recipes-by-year__slider";
-  const sliderWrapper = document.createElement("div");
-  sliderWrapper.classList = "swiper-wrapper";
-  sliderWrapper.append(...winnersElement);
-  slider.append(sliderWrapper);
-  slider.insertAdjacentHTML(
-    "beforeend",
-    '<div class="swiper-pagination"></div>'
-  );
+  // Победителей может не быть — тогда у года просто одна сетка
+  if (winners.length) {
+    const winnerElements = winners
+      .sort((a, b) => a.place - b.place) // Сортировка мест
+      .map(getReceiptElement);
+
+    const winnersSection = document.createElement("section");
+    winnersSection.classList = "recipes-by-year__items recipes-by-year__items--winners";
+    winnersSection.append(...winnerElements);
+
+    root.insertAdjacentElement("beforeend", winnersSection);
+  }
 
   const otherElements = other.map(getReceiptElement);
   const otherElementSection = document.createElement("section");
   otherElementSection.classList = "recipes-by-year__items";
   otherElementSection.append(...otherElements);
 
-  root.innerHTML = `
-    <h2 class="recipes-by-year__title">Рецепты ${year}</h2>
-    <h3 class="recipes-by-year__subtitle">Рецепты-Победители</h3>
-  `;
-
-  root.insertAdjacentElement("beforeend", slider);
   root.insertAdjacentElement("beforeend", otherElementSection);
   HTMLRoot.insertAdjacentElement("beforeend", root);
-
-  createSliderForMobile()
 }
 
 function getFullUrl(relativeUrl) {
@@ -69,15 +58,16 @@ function getFullUrl(relativeUrl) {
   return `${baseURL}${relativeUrl}`;
 }
 
-function getReceiptElement({image_average_url, title, category, year, id, place}) {
+function getReceiptElement({image_small_url, image_average_url, title, category, year, id, place}) {
   const root = document.createElement("article");
-  root.classList = `recipe swiper-slide`;
+  root.classList = "recipe";
   root.innerHTML = `
     <a href="${getFullUrl(`/recipe.html#${id}`)}" class="recipe__link" title="Перейти на страницу рецепта: ${title}">
     </a>
     <div class="recipe__wrapper">
       <div class="recipe__image">
-        <img class="lazy-img" data-lazy="${image_average_url}" alt="Фото рецепта: ${title}">
+        <img class="lazy-img" data-lazy="${image_small_url ?? image_average_url}" alt="Фото рецепта: ${title}">
+        ${place ? '<p class="recipe__badge"><span aria-hidden="true">★</span>Победитель</p>' : ""}
       </div>
       <div class="recipe__content ${place ? "recipe__content--winner" : ""}">
         <div>
@@ -169,6 +159,16 @@ function setPageData(data) {
   const button = document.querySelector("#recipe-button");
 
   image.setAttribute("src", data.image_average_url);
+
+  // Плашка победителя — та же, что на карточках. Чистим прошлую: хэш может смениться без перезагрузки
+  const imageContainer = image.closest(".recipe-page__image-container");
+  imageContainer?.querySelector(".recipe__badge")?.remove();
+  if (data.place && imageContainer) {
+    imageContainer.insertAdjacentHTML(
+      "beforeend",
+      '<p class="recipe__badge"><span aria-hidden="true">★</span>Победитель</p>'
+    );
+  }
   title.innerHTML = data.title;
   author.innerHTML = data.author;
   author.href = data.author_link; // Обновлено для соответствия новой структуре
@@ -203,18 +203,6 @@ function setPageData(data) {
  * Отрисовываем массив с рецептами на главной странице на основе данных из файла recipes.js с актуальными рецптами
  *
  */
-function renderReceiptCards(recipes) {
-  const receiptItems = document.querySelector("#recipe-items");
-  if (!receiptItems) return;
-
-  // Очищаем существующие элементы перед добавлением новых
-  receiptItems.innerHTML = '';
-
-  // Используем переданные данные для создания элементов
-  const items = recipes.map(recipe => getReceiptElement(recipe));
-  receiptItems.append(...items);
-}
-
 function organizeAndRenderRecipesByYear(recipes) {
   const recipesByYear = recipes.reduce((acc, recipe) => {
     if (recipe.published) { // Проверяем, что рецепт опубликован
@@ -297,131 +285,215 @@ window.onload = () => {
       const [, newHash] = newURL.split("#");
       fetchRecipeById(newHash.replace("#", "")).catch(console.error); // Адаптируйте обработчик для использования fetchRecipeById
     });
-  } else if (pathname.includes("past-competition")) {
-    fetchRecipesForPastCompetitions().catch(console.error);
   } else {
-    fetchCurrentRecipes().catch(console.error); // Загружаем рецепты для главной страницы
+    renderAllRecipes().catch(console.error); // Загружаем рецепты для главной страницы
   }
 
   handleBurgerMenuLogic();
   setCauldronTextPosition();
   window.addEventListener("resize", setCauldronTextPosition);
 
-  setTimeout(() => {
-    const media = window.matchMedia("(max-width: 1023.98px)");
-
-    if (media.matches) {
-      createSliderForMobile(media);
-    }
-    media.addEventListener("change", createSliderForMobile);
-  });
 };
 
-function createSliderForMobile() {
-  if (sliders && Array.isArray(sliders)) {
-    sliders.forEach((slider) => slider.destroy(true, true));
+
+/**
+ * Загружаем статический файл с рецептами. Запрос уходит один раз на страницу,
+ * дальше переиспользуется уже полученный список.
+ */
+async function loadRecipes() {
+  if (!recipesRequest) {
+    recipesRequest = fetch(RECIPES_DATA_URL).then(response => {
+      if (!response.ok) {
+        throw new Error('Не удалось загрузить файл с рецептами');
+      }
+      return response.json();
+    });
   }
-  sliders = new Swiper(".swiper", {
-    modules: [Pagination],
-    lazy: true,
-    pagination: {
-      el: ".swiper-pagination",
-      clickable: true,
+
+  return recipesRequest;
+}
+
+// Гифка бегущего паука. На ней он смотрит вверх, а угол движения считается от направления «вправо»
+const SPIDER_GIF = "./images/spider.gif";
+const SPIDER_GIF_HEADING = -90;
+
+// Скорость в длинах тела в секунду: так шаг лап на гифке совпадает с ходом при любом размере паука.
+// Больше — бежит быстрее, лапы начинают «буксовать»; меньше — проскальзывает назад
+const SPIDER_SPEED = 3.5;
+
+/**
+ * Пауки на фоне секции с рецептами: раз в 9-22 секунды один переползает секцию
+ * и удаляется. Слой под карточками и с pointer-events: none, так что кликам не мешает
+ */
+function startSpiders() {
+  const layer = document.querySelector("#spiders");
+  if (!layer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const MAX_AT_ONCE = 2;
+  const random = (min, max) => min + Math.random() * (max - min);
+  new Image().src = SPIDER_GIF;
+  let isVisible = false;
+
+  // Секция высотой в несколько экранов: пока она за кадром, пауков не выпускаем
+  new IntersectionObserver(
+    ([entry]) => {
+      const wasVisible = isVisible;
+      isVisible = entry.isIntersecting;
+      // Первый паук вскоре после того, как до секции долистали
+      if (isVisible && !wasVisible) setTimeout(() => isVisible && releaseSpider(), random(1500, 4000));
     },
-    // spaceBetween: 10,
-    slidesPerView: 3, // На десктопе показываем 3 слайда
-    breakpoints: {
-      // На узких экранах, включая мобильные устройства, показываем 1 слайд
-      320: {
-        slidesPerView: 1,
-        spaceBetween: 20
-      },
-      // На средних экранах показываем 2 слайда
-      500: {
-        slidesPerView: 2,
-        spaceBetween: 20
-      },
-      // На широких экранах показываем 3 слайда
-      1024: {
-        slidesPerView: 3,
-        // spaceBetween: 20
-      },
+    {rootMargin: "10% 0px"}
+  ).observe(layer);
+
+  // Линейка для замеров кривой. Держим её в документе: вне его не все браузеры считают геометрию
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const ruler = document.createElementNS(SVG_NS, "svg");
+  const rulerPath = document.createElementNS(SVG_NS, "path");
+  ruler.setAttribute("aria-hidden", "true");
+  ruler.style.cssText = "position: absolute; width: 0; height: 0; overflow: hidden;";
+  ruler.append(rulerPath);
+  layer.append(ruler);
+
+  // Кривую раскладываем на точки и анимируем transform: такую анимацию браузер отдаёт видеокарте,
+  // а offset-path и пересчёт позиции на каждом кадре — основному потоку
+  const pathKeyframes = d => {
+    rulerPath.setAttribute("d", d);
+    const length = rulerPath.getTotalLength();
+    const steps = Math.max(2, Math.ceil(length / 12));
+    const frames = [];
+    let previousAngle = 0;
+
+    for (let i = 0; i <= steps; i++) {
+      const at = (length * i) / steps;
+      const point = rulerPath.getPointAtLength(at);
+      // Направление движения по соседней точке; в самом конце пути смотрим назад
+      const near = rulerPath.getPointAtLength(at < length ? Math.min(length, at + 1) : at - 1);
+      const [dx, dy] = at < length ? [near.x - point.x, near.y - point.y] : [point.x - near.x, point.y - near.y];
+      let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+      // Без этого на переходе через ±180° паук делал бы полный оборот на месте
+      if (i > 0) {
+        while (angle - previousAngle > 180) angle -= 360;
+        while (angle - previousAngle < -180) angle += 360;
+      }
+      previousAngle = angle;
+
+      frames.push({
+        transform: `translate(${point.x.toFixed(1)}px, ${point.y.toFixed(1)}px) translate(-50%, -50%) rotate(${(angle - SPIDER_GIF_HEADING).toFixed(1)}deg)`
+      });
     }
-  });
+
+    return {frames, length};
+  };
+  const pick = list => list[Math.floor(Math.random() * list.length)];
+
+  // Точка входа/выхода за одной из четырёх границ видимой части секции
+  const edgePoint = (edge, area, size) => {
+    const margin = size * 2;
+    switch (edge) {
+      case "top":
+        return {x: random(0, area.width), y: area.top - margin};
+      case "bottom":
+        return {x: random(0, area.width), y: area.bottom + margin};
+      case "right":
+        return {x: area.width + margin, y: random(area.top, area.bottom)};
+      default:
+        return {x: -margin, y: random(area.top, area.bottom)};
+    }
+  };
+
+  // Блуждающая кривая: пара случайных точек по дороге и гладкие стыки через S-сегменты
+  const wanderPath = (from, to, area) => {
+    const steps = Math.round(random(2, 4));
+    const waypoints = Array.from({length: steps}, () => ({
+      x: random(area.width * 0.1, area.width * 0.9),
+      y: random(area.top, area.bottom)
+    }));
+    const sway = () => random(-260, 260);
+    const round = value => Math.round(value);
+
+    const [first, ...rest] = [...waypoints, to];
+    let d = `M ${round(from.x)} ${round(from.y)}`;
+    d += ` C ${round(from.x + sway())} ${round(from.y + sway())},`;
+    d += ` ${round(first.x + sway())} ${round(first.y + sway())},`;
+    d += ` ${round(first.x)} ${round(first.y)}`;
+
+    return rest.reduce(
+      (path, point) =>
+        `${path} S ${round(point.x + sway())} ${round(point.y + sway())}, ${round(point.x)} ${round(point.y)}`,
+      d
+    );
+  };
+
+  const releaseSpider = () => {
+    const size = Math.round(random(26, 46));
+    const width = layer.offsetWidth;
+
+    // Ползаем в той полосе секции, которая сейчас на экране, иначе паука никто не увидит
+    const {top, height} = layer.getBoundingClientRect();
+    const area = {
+      width,
+      top: Math.max(size, -top + size),
+      bottom: Math.max(Math.max(size, -top + size), Math.min(height - size, -top + window.innerHeight - size))
+    };
+
+    const edges = ["left", "right", "top", "bottom"];
+    // Уйти может в любую сторону, хоть обратно туда, откуда пришёл
+    const d = wanderPath(edgePoint(pick(edges), area, size), edgePoint(pick(edges), area, size), area);
+    const {frames, length} = pathKeyframes(d);
+
+    const spider = document.createElement("div");
+    spider.className = "spider";
+    spider.style.setProperty("--size", `${size}px`);
+    spider.style.transform = frames[0].transform; // чтобы до первого кадра не мелькнул в углу
+    spider.innerHTML = `<img class="spider__body" src="${SPIDER_GIF}" alt="">`;
+    layer.append(spider);
+
+    // Длительность по длине пути и размеру: скорость постоянная, шаг совпадает с гифкой
+    const crawl = spider.animate(frames, {
+      duration: (length / (size * SPIDER_SPEED)) * 1000,
+      easing: "linear",
+      fill: "forwards"
+    });
+    crawl.onfinish = () => spider.remove();
+  };
+
+  const scheduleNext = () => {
+    setTimeout(() => {
+      if (isVisible && layer.querySelectorAll(".spider").length < MAX_AT_ONCE) releaseSpider();
+      scheduleNext();
+    }, random(9000, 22000));
+  };
+
+  scheduleNext();
 }
 
-async function fetchCurrentRecipes() {
-  const title = document.querySelector('.recipes .wrapper header h2');
-  let year = new Date().getFullYear();
-  let yearRecipes = [];
+/**
+ * Браузер не может прыгнуть по якорю на секцию, которой ещё нет в DOM:
+ * рецепты приезжают после загрузки данных, поэтому доводим скролл сами
+ */
+function scrollToHashTarget() {
+  const id = window.location.hash.slice(1);
+  if (!id) return;
 
-  while (yearRecipes.length === 0 && year > 2020) { // Нижний предел для предотвращения бесконечного цикла
-    try {
-      // Получаем победителей за текущий год
-      const winnersResponse = await fetch(`https://seal-pavel.website/halloween-vegan-backend-stage/api/v1/recipes/winners/year/${year}/`);
-      if (!winnersResponse.ok) {
-        throw new Error(`Не удалось проверить победителей за ${year} год`);
-      }
-      const winners = await winnersResponse.json();
-
-      // Если победителей за текущий год нет (пустой список), загружаем рецепты-конкурсантов текущего года
-      if (winners.length === 0) {
-        // Получаем рецепты-конкурсантов за текущий год
-        const recipesResponse = await fetch(`https://seal-pavel.website/halloween-vegan-backend-stage/api/v1/recipes/year/${year}/`);
-        if (!recipesResponse.ok) {
-          throw new Error('Не удалось загрузить рецепты-конкурсантов');
-        }
-        const yearRecipes = await recipesResponse.json();
-        // Если рецептов-конкурсантов за текущий год нет (пустой список), переходим к предыдущему году
-        if (yearRecipes.length === 0) {
-          year--;
-        } else {
-          // Обновляем год в заголовке
-          if (title && year) {
-            title.setAttribute('data-year', year); // Обновляем атрибут data-year
-            title.textContent = `рецепты-конкурсанты ${year}`; // Обновляем текст заголовка
-          }
-          document.querySelector('.recipes').style.display = ''; // Показываем секцию с рецептами-конкурсантами
-          renderReceiptCards(yearRecipes); // Передаём рецепты на отображение
-          animateItems(".lazy-img", null, true); // Активируем ленивую загрузку для изображений
-          break;
-        }
-
-      } else {
-        document.querySelector('.winners').style.display = ''; // Показываем секцию с рецептами победителями
-
-        displayWinners(winners, year); // Загружаем рецепты победителей
-        break;
-      }
-
-    } catch (error) {
-      console.error("Ошибка: ", error);
-      break;
-    }
-  }
+  const target = document.getElementById(id);
+  // Без плавности: это доводка обычного перехода по якорю, а не анимация,
+  // к тому же плавный скролл сбивается подгрузкой картинок
+  if (target) target.scrollIntoView({behavior: "instant", block: "start"});
 }
 
-
-async function fetchRecipesForPastCompetitions() {
+async function renderAllRecipes() {
   try {
-    const response = await fetch('https://seal-pavel.website/halloween-vegan-backend-stage/api/v1/recipes/');
-    if (!response.ok) {
-      throw new Error('Не удалось загрузить рецепты');
-    }
-    const recipes = await response.json();
+    const recipes = await loadRecipes();
 
-    // Предполагаем, что у нас нет прямого поля `hasWinners`, и используем логику проверки наличия победителей
-    // Например, фильтруем рецепты, у которых есть place (не null) - это наш критерий наличия победителей
-    const yearsWithWinners = new Set(recipes.filter(recipe => recipe.place !== null).map(recipe => recipe.year));
+    organizeAndRenderRecipesByYear(recipes);
 
-    // Теперь фильтруем рецепты, оставляя только те, что относятся к годам с победителями
-    const recipesWithWinners = recipes.filter(recipe => yearsWithWinners.has(recipe.year));
-
-    organizeAndRenderRecipesByYear(recipesWithWinners);
-    animateItems(".lazy-img", null, true);
+    document.querySelector('.recipes').style.display = ''; // Показываем секцию с рецептами
+    animateItems(".lazy-img", null, true); // Активируем ленивую загрузку для изображений
+    scrollToHashTarget(); // Секции ещё не было в момент перехода по якорю — доскролливаем сами
+    startSpiders(); // Пауки по фону секции
   } catch (error) {
     console.error("Ошибка при загрузке рецептов: ", error);
-    // Обработка ошибок
   }
 }
 
@@ -432,11 +504,12 @@ async function fetchRecipeById(id) {
   // Контейнер для деталей рецепта
   const receiptHTML = document.querySelector(".recipe-page__receipt");
   try {
-    const response = await fetch(`https://seal-pavel.website/halloween-vegan-backend-stage/api/v1/recipes/${id}/`);
-    if (!response.ok) {
-      throw new Error(`Не удалось загрузить рецепт с ID ${id}`);
+    const recipes = await loadRecipes();
+    // В ссылках используется id, но раньше рецепт открывался и по slug — оставляем оба варианта
+    const recipe = recipes.find(item => String(item.id) === String(id) || item.slug === id);
+    if (!recipe) {
+      throw new Error(`Рецепт с ID ${id} не найден`);
     }
-    const recipe = await response.json();
 
     // Поскольку рецепт успешно загружен, скрываем сообщение об ошибке и показываем контент
     if (warnText) warnText.classList.add("hidden");
@@ -449,40 +522,4 @@ async function fetchRecipeById(id) {
     if (warnText) warnText.classList.remove("hidden");
     if (receiptHTML) receiptHTML.classList.add("hidden");
   }
-}
-
-
-function displayWinners(winners, year) {
-
-  const container = document.getElementById('recipe-winner-items');
-  const title = document.querySelector('.winners .wrapper h2');
-
-  // Обновляем год в заголовке
-  if (title && year) {
-    title.setAttribute('data-year', year); // Обновляем атрибут data-year
-    title.textContent = `РЕЦЕПТЫ-победители ${year}`; // Обновляем текст заголовка
-  }
-
-  container.innerHTML = ''; // Очистить предыдущие данные href="${getFullUrl(`/recipe.html#${winner.id}`)}"
-
-  winners.forEach(winner => {
-    const element = document.createElement('article');
-    element.className = 'recipe';
-    element.innerHTML = `
-      <a class="recipe__link" href="${getFullUrl(`/recipe.html#${winner.id}`)}" title="Перейти на страницу рецепта: ${winner.title}"></a>
-      <div class="recipe__wrapper">
-        <div class="recipe__image">
-          <img src="${winner.image_average_url}" alt="Фото рецепта: ${winner.title}">
-        </div>
-        <div class="recipe__content recipe__content--winner">
-          <div>
-            <p class="recipe__category">${winner.category}</p>
-            <p class="recipe__name">${winner.title}</p>
-          </div>
-          <img src="./images/medals/${winner.place}.svg" alt="Medal">
-        </div>
-      </div>
-    `;
-    container.appendChild(element);
-  });
 }

@@ -1,0 +1,38 @@
+// Пауки, которые периодически пробегают по фону за карточками рецептов
+.spiders {
+    position: absolute;
+    // Слой заходит вверх на промо-блок, чтобы пауки ползали поверх котла, а не ныряли под него
+    top: rem(-420);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+
+    @include media("sm") {
+        top: rem(-240);
+    }
+}
+
+.spider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    // Размер задаёт высота: на гифке паук бежит вверх, так что это длина его тела
+    height: var(--size);
+    // Путь и поворот по ходу движения задаёт JS через Web Animations, только transform
+    will-change: transform;
+
+    &__body {
+        display: block;
+        height: 100%;
+        width: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spiders {
+        display: none;
+    }
+}

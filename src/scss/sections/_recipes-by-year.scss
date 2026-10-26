@@ -1,101 +1,35 @@
-.past-competition {
-    padding-top: calc(var(--from-header-top-shift) + #{rem(60)});
-
-    &__arrow {
-        margin-bottom: rem(54);
-    }
-
-    @include media("sm") {
-        &__arrow {
-            top: var(--header-top-shift);
-            position: absolute;
-            font-size: rem(14);
-            z-index: 100;
-            a {
-                height: var(--header-content-height);
-            }
-            img {
-                height: rem(22);
-            }
-        }
-    }
-}
-
 .recipes-by-year {
-    --y-padding: #{rem(30)};
     margin-bottom: rem(160);
 
     &__title {
-        margin-bottom: calc(#{rem(64)} - var(--y-padding));
+        margin-bottom: rem(48);
     }
 
     &__items {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: var(--gap);
-    }
 
-    &__slider {
-        margin-bottom: calc(#{rem(34)} + var(--y-padding));
-        padding-block: var(--y-padding);
-    }
-
-    &__subtitle {
-        text-align: center;
-    }
-
-    @include media("md", "min") {
-        &__slider {
-            overflow: unset;
-        }
-        .swiper-wrapper {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: var(--gap);
+        &--winners {
+            margin-bottom: rem(64);
         }
     }
 
     @include media("md") {
-        &__slider {
-            padding-inline: var(--gap);
-            margin-inline: calc(-1 * var(--gap));
-            .recipe {
-                width: rem(347);
-            }
-        }
-
         &__items {
             grid-template-columns: repeat(3, 1fr);
-        }
-
-        .swiper-pagination {
-            margin-top: rem(22);
-            display: flex;
-            justify-content: center;
-        }
-
-        .swiper-pagination-bullet {
-            @include circle(#{rem(12)});
-            background-color: var(--gray-color);
-            padding: rem(4);
-            box-sizing: content-box;
-            background-clip: content-box;
-        }
-        .swiper-pagination-bullet-active {
-            background-color: var(--light-orange-color);
         }
     }
 
     @include media("sm") {
-        --y-padding: #{rem(28)};
         margin-bottom: rem(80);
-
-        &__slider {
-            margin-bottom: calc(#{rem(64)} - var(--y-padding));
-        }
 
         &__title {
             margin-bottom: rem(32);
+        }
+
+        &__items--winners {
+            margin-bottom: rem(40);
         }
     }
 

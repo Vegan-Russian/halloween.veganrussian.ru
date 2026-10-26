@@ -37,6 +37,14 @@
         background-color: #bb4411;
     }
 
+    &--purple {
+        background-color: var(--dark-purple-color);
+
+        &:active {
+            background-color: #5e1049;
+        }
+    }
+
     @include media("sm") {
         padding-block: rem(13.5);
         max-width: rem(235);
