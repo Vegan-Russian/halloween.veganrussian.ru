@@ -63,8 +63,15 @@
         }
     }
 
+    // h2 подвала — по виду обычный подзаголовок
     &__subtitle {
         margin-bottom: rem(20);
+        font-family: "Merriweather", serif;
+        font-size: var(--text-fs);
+        color: inherit;
+        text-shadow: none;
+        text-transform: none;
+        letter-spacing: normal;
     }
 
     @include media("md") {

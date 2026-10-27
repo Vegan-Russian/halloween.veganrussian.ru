@@ -1,0 +1,21 @@
+//- GitHub Pages отдаёт этот файл на любой несуществующий адрес, в том числе вложенный — поэтому всё своё и инлайном
+doctype html
+html(lang='ru')
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Страница не найдена — #{seo.SITE_NAME}
+    meta(name="robots" content="noindex")
+    style.
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box;
+        background: #282524; color: #dfdcd3; font: 18px/1.5 Lato, Arial, sans-serif; text-align: center; }
+      h1 { margin: 0 0 12px; color: #ffad32; font-size: clamp(32px, 6vw, 56px); text-shadow: 3px 3px 0 #7b1662; }
+      a { display: inline-block; margin: 24px 8px 0; padding: 14px 28px; border-radius: 28px; background: #d2521b;
+        color: #fff; text-decoration: none; text-transform: uppercase; }
+      a + a { background: #7b1662; }
+  body
+    main
+      h1 Страница не найдена
+      p Похоже, её утащили пауки. Зато рецепты на месте.
+      a(href=`${seo.SITE_URL}/#recipes`) Все рецепты
+      a(href=`${seo.SITE_URL}/`) На главную

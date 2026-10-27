@@ -1,39 +1,19 @@
-include components/blocks/_back-arrow
-
+//- Старые ссылки вида recipe.html#186 разошлись по соцсетям — переводим их на новые страницы рецептов
+- var slugs = Object.fromEntries(recipes.map(item => [item.id, item.slug]))
 doctype html
-html.no-js(lang='ru')
-  include components/service/_head
-  body.body.transition-lock
-    main.recipe-page
-      include components/common/_secondary-page-header
-      .wrapper.recipe-page__content
-        .recipe-page__arrow
-          +back-arrow
-        .recipe-page__receipt#recipe.hidden
-          .recipe-page__main-info
-            .recipe-page__image-container
-              img(src="", alt="")#recipe-image.recipe-page__image
-            .recipe-page__info
-              div
-                h2#recipe-title.recipe-page__title
-                p.recipe-page__author
-                  | Автор_ка рецепта:&nbsp;
-                  a(href="" target="_blank")#recipe-author
-                p.recipe-page__year
-                  span#recipe-year
-                  |&nbsp;год
-                h3.recipe-page__subtitle Жуткая легенда:
-                p.recipe-page__description#recipe-description
-          .recipe-page__details
-            div
-              h3.recipe-page__subtitle Секретный состав:
-              ul#recipe-ingredients.list.list--unordered
-            div
-              h3.recipe-page__subtitle Оккультные инструменты:
-              ul#recipe-tools.list.list--unordered
-            div
-              h3.recipe-page__subtitle Смешиваем проклятия:
-              ol#recipe-steps.list.list--ordered
-        h2#recipe-not-found.hidden Рецепт не найден
-        include components/common/_preview
-      include components/common/_secondary-page-footer
+html(lang='ru')
+  head
+    meta(charset="utf-8")
+    title Переход к рецепту — #{seo.SITE_NAME}
+    meta(name="robots" content="noindex, follow")
+    link(rel="canonical" href=`${seo.SITE_URL}/`)
+    script.
+      (function () {
+        var slugs = !{JSON.stringify(slugs)};
+        var key = decodeURIComponent(location.hash.slice(1));
+        var slug = slugs[key] || (Object.keys(slugs).some(function (id) { return slugs[id] === key; }) ? key : null);
+        location.replace(slug ? "recipe-" + slug + ".html" : "./#recipes");
+      })();
+  body
+    p
+      a(href=`${baseURL}/#recipes`) Все рецепты Vegan Halloween

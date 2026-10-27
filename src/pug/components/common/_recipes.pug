@@ -1,4 +1,15 @@
-section.recipes#recipes(style="display: none;")
+section.recipes#recipes(aria-label="Рецепты конкурса")
   .spiders#spiders(aria-hidden="true")
   .wrapper
-    .recipes__years#recipes-by-year
+    .recipes__years
+      each group in recipesByYear
+        section.recipes-by-year(id=`recipes-${group.year}` aria-labelledby=`recipes-${group.year}-title`)
+          h2.recipes-by-year__title(id=`recipes-${group.year}-title`) Рецепты #{group.year}
+          if group.winners.length
+            .recipes-by-year__items.recipes-by-year__items--winners
+              each recipe in group.winners
+                +recipe(recipe)
+          if group.others.length
+            .recipes-by-year__items
+              each recipe in group.others
+                +recipe(recipe)

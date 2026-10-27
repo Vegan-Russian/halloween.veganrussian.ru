@@ -1,6 +1,9 @@
 doctype html
-html
+html(lang='ru')
   head
-    title Vegan Halloween 2024
+    meta(charset="utf-8")
+    title Интерактивная история «Ведьминский ужин» — #{seo.SITE_NAME}
+    meta(name="description" content="Интерактивная хэллоуинская история «Ведьминский ужин» от Vegan Halloween: выбирайте, как пройдёт веганский ужин у ведьмы.")
+    link(rel="canonical" href=seo.absolute("novella.html"))
   body
     include components/html/novella.html
