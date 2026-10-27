@@ -1,31 +1,48 @@
+//- Страница задаёт свои pageTitle, pageDescription, pageURL, pageImage, pageType, pageSchema и pageRobots до include,
+//- всё незаданное берётся по умолчанию для сайта
+-
+  var title = typeof pageTitle !== "undefined" ? pageTitle : seo.SITE_TITLE
+  var description = typeof pageDescription !== "undefined" ? pageDescription : seo.SITE_DESCRIPTION
+  var url = typeof pageURL !== "undefined" ? pageURL : seo.SITE_URL + "/"
+  var image = typeof pageImage !== "undefined" ? pageImage : seo.absolute("images/og-image.jpg")
+  var imageAlt = typeof pageImageAlt !== "undefined" ? pageImageAlt : seo.SITE_TITLE
+  var type = typeof pageType !== "undefined" ? pageType : "website"
+  var robots = typeof pageRobots !== "undefined" ? pageRobots : "index, follow, max-image-preview:large"
 head
-    meta(name="yandex-verification" content="ae37b381540603e2")
-    meta(http-equiv="X-UA-Compatible" content="IE=edge")
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    meta(name="copyright", content="www.veganrussian.ru, 2023")
-    meta(name="author" content="veganrussian.ru")
-    title Vegan Halloween
+    meta(http-equiv="X-UA-Compatible" content="IE=edge")
+    title= title
+    meta(name="description" content=description)
+    meta(name="robots" content=robots)
+    link(rel="canonical" href=url)
+    meta(name="yandex-verification" content="ae37b381540603e2")
+    meta(name="author" content="Vegan Russian")
 
-    meta(property="og:title" content="Сайт конкурса веган-рецептов на Halloween")
-    meta(property="og:description" content="Создаём хэллуинское настроение без эксплуатации животных с 2020го года!")
-    meta(property="og:site_name" content="Vegan Halloween")
-    // Картинка для ссылки на сайте
-    meta(property="og:image" content="./images/cow.png")
-    meta(property="og:image:width" content="600")
-    meta(property="og:image:height" content="400")
-    meta(property="og:type" content="website")
-    meta(property="og:url" content= "https://veganrussian.ru/")
+    meta(property="og:type" content=type)
+    meta(property="og:site_name" content=seo.SITE_NAME)
     meta(property="og:locale" content="ru_RU")
+    meta(property="og:title" content=title)
+    meta(property="og:description" content=description)
+    meta(property="og:url" content=url)
+    meta(property="og:image" content=image)
+    meta(property="og:image:alt" content=imageAlt)
+    meta(name="twitter:card" content="summary_large_image")
+    meta(name="twitter:title" content=title)
+    meta(name="twitter:description" content=description)
+    meta(name="twitter:image" content=image)
 
     link(rel="apple-touch-icon" sizes="180x180" href="./images/favicon/apple-touch-icon.png")
     link(rel="icon" type="image/png" sizes="32x32" href="./images/favicon/favicon-32x32.png")
     link(rel="icon" type="image/png" sizes="16x16" href="./images/favicon/favicon-16x16.png")
     link(rel="manifest" href="./images/favicon/site.webmanifest")
     link(rel="mask-icon" href="./images/favicon/safari-pinned-tab.svg" color="#5bbad5")
+    link(rel="sitemap" type="application/xml" href="./sitemap.xml")
     meta(name="msapplication-TileColor" content="#da532c")
-    meta(name="theme-color" content="#ffffff")
+    meta(name="theme-color" content="#282524")
 
+    if typeof pageSchema !== "undefined"
+      script(type="application/ld+json")!= seo.jsonLd(pageSchema)
 
     // Yandex.Metrika counter
     script(type="text/javascript").
@@ -44,9 +61,3 @@ head
       div
         img(src="https://mc.yandex.ru/watch/90736188" style="position:absolute; left:-9999px;" alt="")
     // /Yandex.Metrika counter
-
-
-
-
-
-

@@ -43,7 +43,10 @@
         margin-bottom: rem(80);
     }
 
+    // h1 страницы, но по виду — как остальные заголовки секций
     &__title {
+        font-size: var(--h2-fs);
+        text-shadow: 3px 3px 0px var(--dark-purple-color);
         margin-bottom: rem(16);
         color: var(--light-orange-color);
         letter-spacing: 0.04em;
@@ -97,10 +100,18 @@
         grid-gap: var(--content-gap);
     }
 
+    // h2 под заголовком рецепта — без оранжевого оформления заголовков секций
     &__subtitle {
         text-transform: uppercase;
         margin-bottom: rem(32);
         font-size: rem(26);
+        color: inherit;
+        text-shadow: none;
+        letter-spacing: normal;
+    }
+
+    &__description p + p {
+        margin-top: rem(12);
     }
 
     @include media("md") {

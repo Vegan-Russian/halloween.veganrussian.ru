@@ -1,16 +1,13 @@
-script.
-  console.log('Base URL:', !{JSON.stringify(baseURL)});
+- var pageSchema = seo.homeSchema(recipes)
 
-include components/blocks/_place
-//include components/blocks/_hi-label
 include components/blocks/_recipe
 
 doctype html
 html.no-js(lang='ru')
   include components/service/_head
   body.body.transition-lock
+    include components/common/_header
     main
-      include components/common/_header
       include components/common/_promo
       //include components/common/_prizes
       //- include components/common/_sponsor
@@ -20,4 +17,4 @@ html.no-js(lang='ru')
       //include components/common/_terms
       //include components/common/_testing
       include components/common/_novella
-      include components/common/_footer
+    include components/common/_footer

@@ -25,7 +25,7 @@
             }
         }
 
-        a:active + .recipe__wrapper {
+        &:active .recipe__wrapper {
             box-shadow: none;
             .recipe__image img {
                 transform: none;
@@ -81,13 +81,6 @@
 
     &__content {
         padding: rem(17.5) rem(16) rem(29.5);
-
-        &--winner {
-            --allowed-line-count: 3;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: rem(10);
-        }
     }
 
     &__category {
@@ -95,9 +88,17 @@
         font-size: var(--small-text-fs);
         margin-bottom: rem(8);
         color: var(--light-gray-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     &__name {
+        font-family: inherit;
+        font-size: inherit;
+        text-transform: none;
+        letter-spacing: normal;
+        min-height: calc(var(--allowed-line-count) * 1.3em);
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
@@ -106,20 +107,15 @@
         -webkit-box-orient: vertical;
     }
 
+    // Растянутая ссылка: в теге — название рецепта, а кликабельна вся карточка
     &__link {
-        position: absolute;
-        @include inset;
-        display: block;
-        z-index: 1;
-    }
+        color: inherit;
 
-    @include media("md") {
-        &__content {
-            &--winner {
-                img {
-                    width: rem(110);
-                }
-            }
+        &::after {
+            content: "";
+            position: absolute;
+            @include inset;
+            z-index: 1;
         }
     }
 
@@ -150,19 +146,6 @@
 
         &__content {
             padding: rem(4) rem(8) rem(16);
-            &--winner {
-                padding: rem(16) rem(16) rem(32);
-                img {
-                    width: rem(90);
-                }
-                .recipe__category {
-                    font-size: rem(14);
-                }
-
-                .recipe__name {
-                    font-size: rem(16);
-                }
-            }
         }
     }
 }

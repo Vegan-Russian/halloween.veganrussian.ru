@@ -1,25 +1,15 @@
+//- Карточка рецепта. Ссылка стоит на названии и растянута на всю карточку стилями:
+//- кликабельна вся карточка, а у ссылки осмысленный текст для поисковиков и скринридеров
 mixin recipe(recipe)
   article.recipe
-    a.recipe__link(href=`${baseURL}/recipe.html#${recipe.id}` title=`Перейти на страницу рецепта: ${recipe.title}`)
     .recipe__wrapper
       .recipe__image
-        img(src=`${recipe.image}` alt='Фото рецепта')
-      .recipe__content(class=`${recipe.place ? 'recipe__content--winner' : ''}`)
-        div
-          p.recipe__category!= recipe.category
-          p.recipe__name!= recipe.title
-        img(src=`./images/medals/${recipe.place}.svg`)
-  //- <a href="/recipe.html#${recipe.id}" class="recipe__link" title="Перейти на страницу рецепта: ${recipe.title}">
-  //- </a>
-  //- <div class="recipe__wrapper">
-  //-   <div class="recipe__image">
-  //-     <img src="${recipe.image}" alt="Фото рецепта">
-  //-   </div>
-  //-   <div class="recipe__content ${place ? "recipe__content--winner" : ""}">
-  //-     <div>
-  //-       <p class="recipe__category">${recipe.category}</p>
-  //-       <p class="recipe__name">${recipe.title}</p>
-  //-     </div>
-  //-     <img src="./images/medals/${place}.svg">
-  //-   </div>
-  //- </div>
+        img(src=`./${seo.recipeImage(recipe, true)}` alt=`Фото рецепта: ${recipe.title}` width="500" height="435" loading="lazy" decoding="async")
+        if recipe.place
+          p.recipe__badge
+            span(aria-hidden="true") ★
+            | Победитель
+      .recipe__content
+        p.recipe__category= recipe.category
+        h3.recipe__name
+          a.recipe__link(href=`${baseURL}/${seo.recipePath(recipe)}`)= recipe.title

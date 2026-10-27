@@ -1,9 +1,5 @@
 import "../scss/style.scss";
 
-// Рецепты лежат статическим файлом рядом со страницами, бэкенд для них больше не нужен
-const RECIPES_DATA_URL = "./data/recipes.json";
-let recipesRequest = null;
-
 /**
  * Блочим скролл на странице, добавляем падинг, чтобы страница не дёргалась при исчезновении скроллбара
  * @param {boolean} needToLock
@@ -20,64 +16,6 @@ function lockScroll(needToLock = true) {
   }
 
   document.body.classList[needToLock ? "add" : "remove"]("scroll-lock");
-}
-
-function renderYearRecipesSection({year, winners, other}) {
-  const HTMLRoot = document.querySelector("#recipes-by-year");
-
-  const root = document.createElement("section");
-  root.classList = "recipes-by-year";
-
-  root.innerHTML = `<h2 class="recipes-by-year__title">Рецепты ${year}</h2>`;
-
-  // Победителей может не быть — тогда у года просто одна сетка
-  if (winners.length) {
-    const winnerElements = winners
-      .sort((a, b) => a.place - b.place) // Сортировка мест
-      .map(getReceiptElement);
-
-    const winnersSection = document.createElement("section");
-    winnersSection.classList = "recipes-by-year__items recipes-by-year__items--winners";
-    winnersSection.append(...winnerElements);
-
-    root.insertAdjacentElement("beforeend", winnersSection);
-  }
-
-  const otherElements = other.map(getReceiptElement);
-  const otherElementSection = document.createElement("section");
-  otherElementSection.classList = "recipes-by-year__items";
-  otherElementSection.append(...otherElements);
-
-  root.insertAdjacentElement("beforeend", otherElementSection);
-  HTMLRoot.insertAdjacentElement("beforeend", root);
-}
-
-function getFullUrl(relativeUrl) {
-  const isStaging = window.location.hostname.includes('github.io');
-  const baseURL = isStaging ? '/halloween.veganrussian.ru' : '';
-  return `${baseURL}${relativeUrl}`;
-}
-
-function getReceiptElement({image_small_url, image_average_url, title, category, year, id, place}) {
-  const root = document.createElement("article");
-  root.classList = "recipe";
-  root.innerHTML = `
-    <a href="${getFullUrl(`/recipe.html#${id}`)}" class="recipe__link" title="Перейти на страницу рецепта: ${title}">
-    </a>
-    <div class="recipe__wrapper">
-      <div class="recipe__image">
-        <img class="lazy-img" data-lazy="${image_small_url ?? image_average_url}" alt="Фото рецепта: ${title}">
-        ${place ? '<p class="recipe__badge"><span aria-hidden="true">★</span>Победитель</p>' : ""}
-      </div>
-      <div class="recipe__content ${place ? "recipe__content--winner" : ""}">
-        <div>
-          <p class="recipe__category">${category}</p>
-          <p class="recipe__name">${title}</p>
-        </div>
-      </div>
-    </div>
-  `;
-  return root;
 }
 
 /**
@@ -145,85 +83,6 @@ function handleBurgerMenuLogic() {
 }
 
 /**
- * Подставляем нужные данные на странице рецепта в соответствующие поля
- */
-function setPageData(data) {
-  const image = document.querySelector("#recipe-image");
-  const title = document.querySelector("#recipe-title");
-  const author = document.querySelector("#recipe-author");
-  const ingredients = document.querySelector("#recipe-ingredients");
-  const tools = document.querySelector("#recipe-tools");
-  const steps = document.querySelector("#recipe-steps");
-  const description = document.querySelector("#recipe-description");
-  const year = document.querySelector("#recipe-year");
-  const button = document.querySelector("#recipe-button");
-
-  image.setAttribute("src", data.image_average_url);
-
-  // Плашка победителя — та же, что на карточках. Чистим прошлую: хэш может смениться без перезагрузки
-  const imageContainer = image.closest(".recipe-page__image-container");
-  imageContainer?.querySelector(".recipe__badge")?.remove();
-  if (data.place && imageContainer) {
-    imageContainer.insertAdjacentHTML(
-      "beforeend",
-      '<p class="recipe__badge"><span aria-hidden="true">★</span>Победитель</p>'
-    );
-  }
-  title.innerHTML = data.title;
-  author.innerHTML = data.author;
-  author.href = data.author_link; // Обновлено для соответствия новой структуре
-  year.innerHTML = data.year;
-  description.innerHTML = data.description;
-
-  // Исправлено для соответствия структуре данных
-  ingredients.innerHTML = data.ingredients.map(ingredient => {
-    if (ingredient.url) {
-      // Создаём элемент списка с гиперссылкой
-      return `<li><a href="${ingredient.url}" target="_blank">${ingredient.name}</a></li>`;
-    } else {
-      return `<li>${ingredient.name}</li>`;
-    }
-  }).join('');
-
-  tools.innerHTML = data.tools.map(tool =>
-    `<li>${tool}</li>`
-  ).join('');
-
-  steps.innerHTML = data.steps.map(step =>
-    `<li>${step}</li>`
-  ).join('');
-
-  const today = new Date();
-  if (button) {
-    button.classList[today.getFullYear() === data.year ? "remove" : "add"]("hidden");
-  }
-}
-
-/**
- * Отрисовываем массив с рецептами на главной странице на основе данных из файла recipes.js с актуальными рецптами
- *
- */
-function organizeAndRenderRecipesByYear(recipes) {
-  const recipesByYear = recipes.reduce((acc, recipe) => {
-    if (recipe.published) { // Проверяем, что рецепт опубликован
-      const year = recipe.year;
-      if (!acc[year]) {
-        acc[year] = [];
-      }
-      acc[year].push(recipe);
-    }
-    return acc;
-  }, {});
-
-  Object.entries(recipesByYear).sort((a, b) => b[0] - a[0]) // Сортировка по годам
-    .forEach(([year, recipes]) => {
-      const winners = recipes.filter(recipe => recipe.place && recipe.place <= 3);
-      const other = recipes.filter(recipe => !recipe.place || recipe.place > 3);
-      renderYearRecipesSection({year, winners, other});
-    });
-}
-
-/**
  * Функция-наблюдатель. По достижении определённых HTML-элементов мы присваиваем им заданные классы или
  * класс по умолчанию reached, для анимирования элементов при скролле
  * @param {string} classToWatch
@@ -274,20 +133,7 @@ window.onload = () => {
   document.body.classList.remove("transition-lock");
   animateItems(".observed");
 
-  const {hash, pathname} = window.location;
-
-  if (pathname.includes("/recipe")) {
-    const recipeId = hash.replace("#", "");
-    fetchRecipeById(recipeId).catch(console.error);
-
-    window.addEventListener("hashchange", (event) => {
-      const {newURL} = event;
-      const [, newHash] = newURL.split("#");
-      fetchRecipeById(newHash.replace("#", "")).catch(console.error); // Адаптируйте обработчик для использования fetchRecipeById
-    });
-  } else {
-    renderAllRecipes().catch(console.error); // Загружаем рецепты для главной страницы
-  }
+  startSpiders(); // Пауки по фону секции с рецептами — на главной
 
   handleBurgerMenuLogic();
   setCauldronTextPosition();
@@ -295,23 +141,6 @@ window.onload = () => {
 
 };
 
-
-/**
- * Загружаем статический файл с рецептами. Запрос уходит один раз на страницу,
- * дальше переиспользуется уже полученный список.
- */
-async function loadRecipes() {
-  if (!recipesRequest) {
-    recipesRequest = fetch(RECIPES_DATA_URL).then(response => {
-      if (!response.ok) {
-        throw new Error('Не удалось загрузить файл с рецептами');
-      }
-      return response.json();
-    });
-  }
-
-  return recipesRequest;
-}
 
 // Гифка бегущего паука. На ней он смотрит вверх, а угол движения считается от направления «вправо»
 const SPIDER_GIF = "./images/spider.gif";
@@ -466,60 +295,4 @@ function startSpiders() {
   };
 
   scheduleNext();
-}
-
-/**
- * Браузер не может прыгнуть по якорю на секцию, которой ещё нет в DOM:
- * рецепты приезжают после загрузки данных, поэтому доводим скролл сами
- */
-function scrollToHashTarget() {
-  const id = window.location.hash.slice(1);
-  if (!id) return;
-
-  const target = document.getElementById(id);
-  // Без плавности: это доводка обычного перехода по якорю, а не анимация,
-  // к тому же плавный скролл сбивается подгрузкой картинок
-  if (target) target.scrollIntoView({behavior: "instant", block: "start"});
-}
-
-async function renderAllRecipes() {
-  try {
-    const recipes = await loadRecipes();
-
-    organizeAndRenderRecipesByYear(recipes);
-
-    document.querySelector('.recipes').style.display = ''; // Показываем секцию с рецептами
-    animateItems(".lazy-img", null, true); // Активируем ленивую загрузку для изображений
-    scrollToHashTarget(); // Секции ещё не было в момент перехода по якорю — доскролливаем сами
-    startSpiders(); // Пауки по фону секции
-  } catch (error) {
-    console.error("Ошибка при загрузке рецептов: ", error);
-  }
-}
-
-
-async function fetchRecipeById(id) {
-  // Элемент для отображения, если рецепт не найден
-  const warnText = document.querySelector("#recipe-not-found");
-  // Контейнер для деталей рецепта
-  const receiptHTML = document.querySelector(".recipe-page__receipt");
-  try {
-    const recipes = await loadRecipes();
-    // В ссылках используется id, но раньше рецепт открывался и по slug — оставляем оба варианта
-    const recipe = recipes.find(item => String(item.id) === String(id) || item.slug === id);
-    if (!recipe) {
-      throw new Error(`Рецепт с ID ${id} не найден`);
-    }
-
-    // Поскольку рецепт успешно загружен, скрываем сообщение об ошибке и показываем контент
-    if (warnText) warnText.classList.add("hidden");
-    if (receiptHTML) receiptHTML.classList.remove("hidden");
-
-    setPageData(recipe); // Отображение деталей рецепта
-  } catch (error) {
-    console.error("Ошибка при загрузке рецепта: ", error);
-    // Показываем сообщение об ошибке и скрываем контент рецепта
-    if (warnText) warnText.classList.remove("hidden");
-    if (receiptHTML) receiptHTML.classList.add("hidden");
-  }
 }

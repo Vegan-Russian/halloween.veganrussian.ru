@@ -1,0 +1,68 @@
+//- Отдельная статическая страница на каждый рецепт: webpack.config.js создаёт её по рецептам из src/data/recipes.json
+-
+  var pageTitle = seo.recipeTitle(recipe)
+  var pageDescription = seo.recipeDescription(recipe)
+  var pageURL = seo.recipeURL(recipe)
+  var pageImage = seo.absolute(seo.recipeImage(recipe))
+  var pageImageAlt = recipe.title
+  var pageType = "article"
+  var pageSchema = seo.recipeSchema(recipe)
+  var story = seo.paragraphs(recipe.description)
+
+include ../components/blocks/_back-arrow
+
+doctype html
+html.no-js(lang='ru')
+  include ../components/service/_head
+  body.body.transition-lock
+    include ../components/common/_secondary-page-header
+    main.recipe-page
+      .wrapper.recipe-page__content
+        .recipe-page__arrow
+          +back-arrow(`/#recipes-${recipe.year}`)
+        article.recipe-page__receipt
+          .recipe-page__main-info
+            .recipe-page__image-container
+              img.recipe-page__image(src=`./${seo.recipeImage(recipe)}` alt=`${recipe.title} — фото рецепта` width="1500" height="1306" fetchpriority="high")
+              if recipe.place
+                p.recipe__badge
+                  span(aria-hidden="true") ★
+                  | Победитель
+            .recipe-page__info
+              div
+                h1.recipe-page__title= recipe.title
+                p.recipe-page__author
+                  | Автор_ка рецепта:&nbsp;
+                  if recipe.author_link
+                    a(href=recipe.author_link target="_blank" rel="noopener")= recipe.author
+                  else
+                    span= recipe.author
+                p.recipe-page__year
+                  | #{recipe.category} · #{recipe.year}&nbsp;год
+                if story.length
+                  h2.recipe-page__subtitle Жуткая легенда:
+                  .recipe-page__description
+                    each paragraph in story
+                      p= paragraph
+          .recipe-page__details
+            section
+              h2.recipe-page__subtitle Секретный состав:
+              ul.list.list--unordered
+                each ingredient in recipe.ingredients
+                  li
+                    if ingredient.url
+                      a(href=ingredient.url target="_blank" rel="noopener")= ingredient.name
+                    else
+                      = ingredient.name
+            if recipe.tools && recipe.tools.length
+              section
+                h2.recipe-page__subtitle Оккультные инструменты:
+                ul.list.list--unordered
+                  each tool in recipe.tools
+                    li= tool
+            section
+              h2.recipe-page__subtitle Смешиваем проклятия:
+              ol.list.list--ordered
+                each step in recipe.steps
+                  li= step
+    include ../components/common/_secondary-page-footer

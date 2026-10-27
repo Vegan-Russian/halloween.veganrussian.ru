@@ -1,0 +1,14 @@
+//- Раньше рецепты прошлых лет жили на отдельной странице — теперь всё на главной
+doctype html
+html(lang='ru')
+  head
+    meta(charset="utf-8")
+    title Рецепты прошлых лет — #{seo.SITE_NAME}
+    meta(name="robots" content="noindex, follow")
+    link(rel="canonical" href=`${seo.SITE_URL}/`)
+    meta(http-equiv="refresh" content="0; url=./#recipes")
+    script.
+      location.replace("./#recipes");
+  body
+    p
+      a(href=`${baseURL}/#recipes`) Все рецепты Vegan Halloween

@@ -9,6 +9,8 @@ const path = require("path");
 const ImageminWebpWebpackPlugin = require("imagemin-webp-webpack-plugin");
 const globImporter = require("node-sass-glob-importer");
 const baseURL = process.env.BASE_URL || '';
+const webpack = require("webpack");
+const seo = require("./build/seo");
 
 
 
@@ -47,9 +49,22 @@ module.exports = function (_, argv) {
         new HtmlWebpackPlugin({
           template: "src/pug/" + filename + ".pug",
           filename: filename + ".html",
+          // Служебным страницам (404 и редиректы со старых адресов) бандл не нужен
+          inject: !["404", "recipe", "past-competition"].includes(filename),
         })
       );
     }
+  });
+
+  // Каждому рецепту своя статическая страница: поисковики и AI-краулеры видят текст без JS.
+  // Список страниц читается при старте — новый рецепт в JSON требует перезапуска сборки
+  seo.readRecipes().forEach((recipe) => {
+    templates.push(
+      new HtmlWebpackPlugin({
+        template: `src/pug/templates/recipe.pug?recipe=${recipe.slug}`,
+        filename: seo.recipePath(recipe),
+      })
+    );
   });
 
   return {
@@ -69,10 +84,10 @@ module.exports = function (_, argv) {
           use: [
             'raw-loader',
             {
-            loader: 'pug-html-loader',
-            options: {
+              loader: path.resolve(__dirname, "build/pug-loader.js"),
+              options: {
                 data: { baseURL }  // передаем baseURL в шаблоны pug
-            }
+              }
             }],
         },
         {
@@ -185,6 +200,22 @@ module.exports = function (_, argv) {
         ],
       }),
       pluginImgMinify,
+      {
+        apply(compiler) {
+          compiler.hooks.thisCompilation.tap("SeoFiles", (compilation) => {
+            compilation.hooks.processAssets.tap(
+              { name: "SeoFiles", stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL },
+              () => {
+                const data = seo.readRecipes();
+                compilation.fileDependencies.add(seo.RECIPES_PATH);
+                compilation.emitAsset("sitemap.xml", new webpack.sources.RawSource(seo.sitemap(data)));
+                compilation.emitAsset("robots.txt", new webpack.sources.RawSource(seo.robots()));
+                compilation.emitAsset("llms.txt", new webpack.sources.RawSource(seo.llms(data)));
+              }
+            );
+          });
+        },
+      },
     ],
   };
 };
